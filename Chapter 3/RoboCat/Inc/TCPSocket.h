@@ -8,6 +8,7 @@ public:
 	shared_ptr< TCPSocket >			Accept( SocketAddress& inFromAddress );
 	int32_t							Send( const void* inData, size_t inLen );
 	int32_t							Receive( void* inBuffer, size_t inLen );
+    SOCKET GetSocket()  {return mSocket;}
 private:
 	friend class SocketUtil;
 	TCPSocket( SOCKET inSocket ) : mSocket( inSocket ) {}
