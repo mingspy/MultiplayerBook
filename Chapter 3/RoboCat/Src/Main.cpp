@@ -89,6 +89,53 @@ void run_tcp_client(){
     }
 }
 
+void run_udp_server(){
+    // SocketAddressPtr addrPtr = std::make_shared<SocketAddress>(INADDR_ANY, 7777);
+    SocketAddressPtr addrPtr = SocketAddressFactory::CreateIPv4FromString("127.0.0.1:48000");
+    cout<<"run udp server at "<< addrPtr->ToString()<<endl;
+    UDPSocketPtr listenSocket= SocketUtil::CreateUDPSocket(INET);
+    listenSocket->SetNonBlockingMode(true);
+    if (listenSocket->Bind(*addrPtr)){
+        cerr<<"bind udp error"<<endl;
+        return;
+    }
+    SocketAddress clientAddr;
+    int ret;
+    char buf[GOOD_BUF_SIZE];
+    while (true){
+        ret = listenSocket->ReceiveFrom(buf, GOOD_BUF_SIZE, clientAddr);
+        if (ret <= 0){
+            continue;
+        }
+        cout<<"client:"<< clientAddr.ToString()<<" say "<<buf<<endl;
+        listenSocket->SendTo(buf, ret, clientAddr);
+    }
+}
+
+void run_udp_client(){
+    SocketAddressPtr addrPtr = SocketAddressFactory::CreateIPv4FromString("localhost:48000");
+    UDPSocketPtr socket= SocketUtil::CreateUDPSocket(INET);
+    char buf[GOOD_BUF_SIZE];
+    SocketAddress srvAddr;
+    while(true){
+        cout<<"udp>";
+        cin.getline(buf, GOOD_BUF_SIZE);
+        cout<<buf<<endl;
+        int err = socket->SendTo(buf, strlen(buf) , *addrPtr);
+        if (err < 0){
+            cout<<"error"<<err<<endl;
+            return;
+        }
+        int bytes = socket->ReceiveFrom(buf, GOOD_BUF_SIZE, srvAddr);
+        if (bytes > 0){
+            cout<<"  server say:"<<buf<<endl;
+        }else{
+            cout<<"  server disconnect!"<<endl;
+            break;
+        }
+    }
+}
+
 #if _WIN32
 int WINAPI WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow )
 {
@@ -109,6 +156,12 @@ int main(int argc, const char** argv)
     }
     else if (arg1 == "tcp_client"){
         run_tcp_client();
+    }
+    else if (arg1 ==  "udp_server"){
+        run_udp_server();
+    }
+    else if (arg1 == "udp_client"){
+        run_udp_client();
     }
 }
 #endif
